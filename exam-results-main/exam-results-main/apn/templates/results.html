@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .tab-button:hover {
+            background: linear-gradient(135deg, #d5dce0 0%, #a8aeb5 100%);
+            border-color: #95a5a6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            border-radius: 2px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .details-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .details-table th {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .details-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 15px;
+        }
+        .details-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .details-table tr:nth-child(even):hover {
+            background-color: #f0f3f5;
+        }
+        .details-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .details-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .download-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .download-btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f618d 100%);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .result-box {
+            padding: 40px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ecf0f1 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .result-text {
+            font-size: 48px;
+            font-weight: 700;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .result-emoji {
+            font-size: 64px;
+            display: block;
+            margin-top: 15px;
+        }
+
+        .performance-key {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .key-item {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .key-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .key-item-excellent {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+
+        .key-item-good {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        .key-item-satisfactory {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .key-item-fail {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .key-category {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .key-range {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .key-description {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .suggestions-container {
+            margin-top: 20px;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .suggestion-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-left: 6px solid #3498db;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            min-height: 180px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .suggestion-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .suggestion-card.high-priority {
+            border-left-color: #e74c3c;
+            background: linear-gradient(135deg, #fff 0%, #fdf2f2 100%);
+        }
+
+        .suggestion-card.medium-priority {
+            border-left-color: #f39c12;
+            background: linear-gradient(135deg, #fff 0%, #fef9e7 100%);
+        }
+
+        .suggestion-card.low-priority {
+            border-left-color: #27ae60;
+            background: linear-gradient(135deg, #fff 0%, #f0f9f4 100%);
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .priority-badge.high {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .priority-badge.medium {
+            background: #f39c12;
+            color: white;
+        }
+
+        .priority-badge.low {
+            background: #27ae60;
+            color: white;
+        }
+
+        .suggestion-category {
+            font-size: 22px;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+
+        .suggestion-current {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 8px 12px;
+            background: rgba(127, 140, 141, 0.1);
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .suggestion-recommendation {
+            font-size: 17px;
+            color: #34495e;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .suggestion-action {
+            font-size: 16px;
+            color: #3498db;
+            font-weight: 700;
+            padding: 12px 0;
+            border-top: 2px solid #ecf0f1;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        .no-suggestions {
+            text-align: center;
+            padding: 60px;
+            color: #27ae60;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f0f9f4 0%, #e8f8f5 100%);
+            border-radius: 15px;
+            border: 2px solid #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="tabs" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="result">
+                ✅ Prediction Result
+            </button>
+            <button class="tab-button" data-tab="details">
+                📋 Entered Details
+            </button>
+            <button class="tab-button" data-tab="suggestions">
+                🚀 Improvement Suggestions
+            </button>
+            <button class="tab-button" data-tab="key">
+                📊 Performance Scale
+            </button>
+        </div>
+
+        <h1>Your Result Is</h1>
+
+        <div class="tab-content active" id="result">
+            <div class="result-box" data-pred="{{ prediction_text|e }}">
+                <span class="result-text">{{ prediction_text }}</span>
+                <span id="result-emoji" class="result-emoji" aria-hidden="true"></span>
+            </div>
+            <div class="button-container">
+                <a href="/download_result" class="download-btn">📄 Download as PDF</a>
+            </div>
+        </div>
+
+        <div class="tab-content" id="details">
+            {% if details %}
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for key, value in details.items() %}
+                    <tr>
+                        <td><strong>{{ key }}</strong></td>
+                        <td>{{ value }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+
+        <div class="tab-content" id="suggestions" style="width: 100%;">
+            <div class="suggestions-container">
+                {% if suggestions %}
+                    {% for suggestion in suggestions %}
+                    <div class="suggestion-card {{ suggestion.priority }}-priority">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                            <div>
+                                <span class="priority-badge {{ suggestion.priority }}">{{ suggestion.priority }} priority</span>
+                                <div class="suggestion-category">{{ suggestion.category }}</div>
+                            </div>
+                            <div class="suggestion-current">Current: {{ suggestion.current }}</div>
+                        </div>
+                        <div class="suggestion-recommendation">{{ suggestion.recommendation }}</div>
+                        <div class="suggestion-action">💡 {{ suggestion.action }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-suggestions">
+                        🎉 Great job! No specific improvements needed. Keep up the excellent work!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-content" id="key">
+            <div class="performance-key">
+                <div class="key-item key-item-excellent">
+                    <div class="key-category">🏆 Excellent</div>
+                    <div class="key-range">85 - 100</div>
+                    <div class="key-description">Outstanding performance</div>
+                </div>
+                <div class="key-item key-item-good">
+                    <div class="key-category">👍 Good</div>
+                    <div class="key-range">70 - 84</div>
+                    <div class="key-description">Above average performance</div>
+                </div>
+                <div class="key-item key-item-satisfactory">
+                    <div class="key-category">⚖️ Satisfactory</div>
+                    <div class="key-range">50 - 69</div>
+                    <div class="key-description">Acceptable performance</div>
+                </div>
+                <div class="key-item key-item-fail">
+                    <div class="key-category">❌ Fail</div>
+                    <div class="key-range">Below 50</div>
+                    <div class="key-description">Needs improvement</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top:30px; text-align:center;">
+            <a href="/" style="color: #3498db; text-decoration: none; font-weight: 600; font-size: 16px; padding: 10px 20px; border: 2px solid #3498db; border-radius: 6px; transition: all 0.3s ease; display: inline-block;"
+               onmouseover="this.style.background='#3498db'; this.style.color='white';"
+               onmouseout="this.style.background='transparent'; this.style.color='#3498db';">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        const buttons = document.querySelectorAll('.tab-button');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        function activate(tab){
+            buttons.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            contents.forEach(c => c.classList.toggle('active', c.id === tab));
+        }
+        
+        buttons.forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+        activate('result');
+
+        // Emoji logic for results
+        function chooseEmoji(text){
+            if(!text) return '🎯';
+            const t = String(text).toLowerCase();
+            if(/\b(pass|passed|promoted|success|excellent|distinction|good)\b/.test(t)) return '✅';
+            if(/\b(fail|failed|unsatisfactory|error|deficient)\b/.test(t)) return '❌';
+            if(/\b(average|moderate|ok|satisfactory)\b/.test(t)) return '⚖️';
+            const m = t.match(/-?\d+\.?\d*/);
+            if(m){
+                const n = parseFloat(m[0]);
+                if(!isNaN(n)){
+                    if(n == 0) return '🏆';
+                    if(n == 1) return '👍';
+                    if(n == 2) return '⚠️';
+                    return '❌';
+                }
+            }
+            return '🎉';
+        }
+
+        const resultBox = document.querySelector('.result-box');
+        if(resultBox){
+            const pred = resultBox.dataset.pred || '';
+            const emoji = chooseEmoji(pred);
+            const span = document.getElementById('result-emoji');
+            if(span){
+                span.textContent = emoji;
+                span.setAttribute('aria-label', 'result emoji');
+            }
+        }
+    });
+    </script>
+
+</body>
+</html>
